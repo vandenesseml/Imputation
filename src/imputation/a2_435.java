@@ -5,6 +5,7 @@ import com.opencsv.CSVReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class a2_435 {
         init();
         buildDatasets();
         meanImputation();
+        conditionalMeanImputation();
     }
     protected static void init() {
         fileMap = new HashMap();
@@ -33,10 +35,9 @@ public class a2_435 {
         datasetMap = new HashMap();
         imputedDatasetMap = new HashMap();
         
-        imputedDatasetMap.put("V70480478_missing01_imputed_mean_conditional", new Float[8796][14]);
+        
         imputedDatasetMap.put("V70480478_missing01_imputed_hd", new Float[8796][14]);
         imputedDatasetMap.put("V70480478_missing01_imputed_hd_conditional", new Float[8796][14]);
-        imputedDatasetMap.put("V70480478_missing10_imputed_mean_conditional", new Float[8796][14]);
         imputedDatasetMap.put("V70480478_missing10_imputed_hd", new Float[8796][14]);
         imputedDatasetMap.put("V70480478_missing10_imputed_hd_conditional", new Float[8796][14]);
     }
@@ -77,24 +78,28 @@ public class a2_435 {
                 }
             try{
             formattedDatasetArray[i] = Float.parseFloat(array[i]);
-            } catch(Exception e) {
+            } catch(NumberFormatException e) {
                 formattedDatasetArray[i] = null;
             }
         }
         return formattedDatasetArray;
     }
+    protected static Float[][] copyArray(Float[][] originalArray){
+        Float[][] newArray = new Float[8795][14];
+        for(int i = 0; i < 8795;i++){
+            System.arraycopy(originalArray[i], 0, newArray[i], 0, 14);
+        }
+        return newArray;
+    }
     protected static void meanImputation(){
         float summedValues = 0;
         int count = 0;
         Map<Integer,Integer> imputationIndexMap = new HashMap();
-        imputedDatasetMap.put("V70480478_missing01_imputed_mean", 
-                datasetMap.get("dataset_missing01"));
-        imputedDatasetMap.put("V70480478_missing10_imputed_mean", 
-                datasetMap.get("dataset_missing10"));
-        
+        imputedDatasetMap.put("V70480478_missing01_imputed_mean",copyArray(datasetMap.get("dataset_missing01")));
+        imputedDatasetMap.put("V70480478_missing10_imputed_mean", copyArray(datasetMap.get("dataset_missing10")));
         for(String datasetMapKey: datasetKeys){
             for(int i = 0;i < 13; i++){
-                for(int j = 0;j < datasetMap.get(datasetMapKey).length;j++){
+                for(int j = 0;j < 8795;j++){
                     if(datasetMap.get(datasetMapKey)[j][i] != null){
                         summedValues = summedValues + datasetMap
                                 .get(datasetMapKey)[j][i];
@@ -106,7 +111,7 @@ public class a2_435 {
 //              calculate mean of all values and replace null values with that
 //              mean.
                 Float imputedValue = summedValues/count;
-                for(Integer imputationIndexMapKey: imputationIndexMap.keySet()){
+                imputationIndexMap.keySet().forEach((imputationIndexMapKey) -> {
                     if(datasetMapKey.equals("dataset_missing01")){
                         imputedDatasetMap.get("V70480478_missing01_imputed_mean")
                                 [imputationIndexMapKey][imputationIndexMap
@@ -118,13 +123,76 @@ public class a2_435 {
                                         .get(imputationIndexMapKey)] 
                                 = imputedValue;
                     }
-                }
+                });
                 imputationIndexMap.clear();
                 count = 0;
+                summedValues = 0;
+            }
+        }   
+    }
+    protected static void conditionalMeanImputation(){
+        imputedDatasetMap.put("V70480478_missing01_imputed_mean_conditional", 
+                copyArray(datasetMap.get("dataset_missing01")));
+        imputedDatasetMap.put("V70480478_missing10_imputed_mean_conditional", 
+                copyArray(datasetMap.get("dataset_missing10")));
+        Map<Integer, Float> classYMeanMap = new HashMap();
+        Map<Integer, Float> classNMeanMap = new HashMap();
+        Map<Integer, Integer> classYCountMap = new HashMap();
+        Map<Integer, Integer> classNCountMap = new HashMap();
+        
+        datasetKeys.forEach((datasetKey) -> {
+            for(int i = 0;i < 13;i++){
+            classYMeanMap.put(i,(float)0);
+            classNMeanMap.put(i,(float)0);
+            classYCountMap.put(i,0);
+            classNCountMap.put(i,0);
+        }
+            int coount = 0;
+        for(int i = 0;i<8795;i++){
+            for(int j = 0;j < 13;j++){
+                if(datasetMap.get(datasetKey)[i][j] != null){
+                    if(datasetMap.get(datasetKey)[i][13] == (float)1){
+                        Float currentFeatureSum = classYMeanMap.get(j);
+                        classYMeanMap.put(j, (currentFeatureSum +
+                                datasetMap.get(datasetKey)[i][j]));
+                        int currentFeatureCount = (int)classYCountMap.get(j);
+                        classYCountMap.put(j, ++currentFeatureCount);
+                    } else if (datasetMap.get(datasetKey)[i][13] == (float)0){
+                        Float currentFeatureSum = classNMeanMap.get(j);
+                        classNMeanMap.put(j, (currentFeatureSum +
+                                datasetMap.get(datasetKey)[i][j]));
+                        int currentFeatureCount = classNCountMap.get(j);
+                        classNCountMap.put(j, ++currentFeatureCount);
+                    }
+                }   
             }
         }
-        
-        
+        for(int i = 0;i < 13;i++){
+            Float classYMean = classYMeanMap.get(i)/classYCountMap.get(i);
+            Float classNMean = classNMeanMap.get(i)/classNCountMap.get(i);
+            classYMeanMap.put(i,classYMean);
+            classNMeanMap.put(i,classNMean);
+        }
+        for(int i = 0;i<8795;i++){
+            for(int j = 0;j < 13;j++){
+                if(datasetMap.get(datasetKey)[i][j] == null){
+                    if(datasetMap.get(datasetKey)[i][13] == (float)1){
+                        if(datasetKey.equals("dataset_missing01")){
+                        imputedDatasetMap.get("V70480478_missing01_imputed_mean_conditional")[i][j] = classYMeanMap.get(j);
+                        } else {
+                            imputedDatasetMap.get("V70480478_missing10_imputed_mean_conditional")[i][j] = classYMeanMap.get(j);
+                        }
+                    } else if (datasetMap.get(datasetKey)[i][13] == (float)0){
+                        if(datasetKey.equals("dataset_missing01")){
+                            imputedDatasetMap.get("V70480478_missing01_imputed_mean_conditional")[i][j] = classNMeanMap.get(j);
+                        } else {
+                            imputedDatasetMap.get("V70480478_missing10_imputed_mean_conditional")[i][j] = classNMeanMap.get(j);
+                        }
+                    }
+                }   
+            }
+        }
+        });
     }
 }
 

@@ -29,7 +29,7 @@ public class a2_435 {
         buildDatasets();
         meanImputation();
         conditionalMeanImputation();
-        hotDeckImputation()
+        hotDeckImputation();
     }
     protected static void init() {
         fileMap = new HashMap();

@@ -2,19 +2,21 @@
 package imputation;
 
 import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -34,6 +36,7 @@ public class a2_435 {
         hotDeckImputation();
         conditionalHotDeckImputation();
         calculateAndDisplayMAE();
+        formatAndSaveImputedDatasets();
     }
     protected static void init() {
         fileMap = new HashMap();
@@ -366,7 +369,8 @@ public class a2_435 {
     }
     protected static void calculateAndDisplayMAE(){
         imputedDatasetMap.keySet().forEach((imputedDatasetMapKey -> {
-            String datasetMapKey = "dataset_" + imputedDatasetMapKey.substring(10, 19);
+            String datasetMapKey = "dataset_" + imputedDatasetMapKey
+                    .substring(10, 19);
             Float absSummedDifferences = (float)0;
             int numberOfNulls = 0;
             for(int i = 0; i < 8795;i++){
@@ -374,7 +378,10 @@ public class a2_435 {
                     if(datasetMap.get(datasetMapKey)[i][j] == null){
                         try{
                             
-                        absSummedDifferences = absSummedDifferences + Math.abs((imputedDatasetMap.get(imputedDatasetMapKey)[i][j]) - (datasetMap.get("dataset_complete")[i][j]));
+                        absSummedDifferences = absSummedDifferences + Math
+                                .abs((imputedDatasetMap
+                                    .get(imputedDatasetMapKey)[i][j]) -
+                                    (datasetMap.get("dataset_complete")[i][j]));
                         numberOfNulls++;
                         } catch (Exception e){
                             int x = 0;
@@ -384,12 +391,52 @@ public class a2_435 {
             }
             float MAE = (((float)1/(float)numberOfNulls)*absSummedDifferences);
             String imputedDatasetName = imputedDatasetMapKey;
-            String algorithm = imputedDatasetName.substring(27,imputedDatasetName.length());
+            String algorithm = imputedDatasetName.substring(27,
+                    imputedDatasetName.length());
             String datasetNumber = imputedDatasetMapKey.substring(17,19);
-            System.out.println("MAE_" + datasetNumber + algorithm + " = " + String.format("%.4f",MAE));
+            System.out.println("MAE_" + datasetNumber + algorithm + " = " + 
+                    String.format("%.4f",MAE));
         }));
     }
     protected static void formatAndSaveImputedDatasets(){
+        imputedDatasetMap.keySet().forEach((imputedDatasetMapKey) -> {
+            String fileName = imputedDatasetMapKey + ".csv";
+            String[][] printArray = new String[8796][14];
+            FileOutputStream fileOutputStream = null;
+            OutputStreamWriter outputStreamWriter = null;
+            CSVWriter csvWriter = null;
+            try {
+                    fileOutputStream = new FileOutputStream(fileName);
+                    outputStreamWriter = new OutputStreamWriter(fileOutputStream, 
+                    StandardCharsets.UTF_8);
+                    csvWriter = new CSVWriter(outputStreamWriter);
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(a2_435.class.getName()).log(Level.SEVERE,
+                            null, ex);
+                }
+            for(int i = 0;i < 14;i++){
+                if(i != 13){
+                    printArray[0][i] = "F" + (i+1);
+                } else {
+                    printArray[0][i] = "Class";
+                }
+            }
+            for(int i = 0;i < 8795;i++){
+                for(int j = 0;j < 14;j++){
+                    if(j == 13) {
+                        if((imputedDatasetMap.get(imputedDatasetMapKey)[i][j]).intValue() == 1){
+                            printArray[i+1][j] = "Y";
+                    } else {
+                            printArray[i+1][j] = "N";
+                        }
+                    } else {
+                    printArray[i+1][j] = String.format("%.5f",
+                            imputedDatasetMap.get(imputedDatasetMapKey)[i][j]);
+                    }
+                }
+                csvWriter.writeNext(printArray[i]);
+            }
+        });
         
     }
 }

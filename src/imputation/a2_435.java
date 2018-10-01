@@ -31,6 +31,7 @@ public class a2_435 {
         meanImputation();
         conditionalMeanImputation();
         hotDeckImputation();
+        conditionalHotDeckImputation();
     }
     protected static void init() {
         fileMap = new HashMap();
@@ -40,8 +41,10 @@ public class a2_435 {
         datasetMap = new HashMap();
         imputedDatasetMap = new HashMap();
         
-        imputedDatasetMap.put("V70480478_missing10_imputed_hd", new Float[8796][14]);
-        imputedDatasetMap.put("V70480478_missing10_imputed_hd_conditional", new Float[8796][14]);
+        imputedDatasetMap.put("V70480478_missing10_imputed_hd",
+                new Float[8796][14]);
+        imputedDatasetMap.put("V70480478_missing10_imputed_hd_conditional",
+                new Float[8796][14]);
     }
     protected static void buildDatasets(){
         try{
@@ -52,9 +55,10 @@ public class a2_435 {
             CSVReader csvReader = new CSVReader(filereader);
             int datasetIndex = 0;
             int index;
-            while ((fileMap.get(key)[datasetIndex] = csvReader.readNext()) != null) { 
-                
-                datasetMap.get(datasetKey)[datasetIndex] = formatDatasetToFloat(fileMap.get(key)[datasetIndex]);
+            while ((fileMap.get(key)[datasetIndex] = csvReader.readNext()) !=
+                    null) { 
+                datasetMap.get(datasetKey)[datasetIndex] = 
+                        formatDatasetToFloat(fileMap.get(key)[datasetIndex]);
                 datasetIndex++;
                 if(fileMap.get(key)[datasetIndex-1][0].equals("F1")) {
                    datasetIndex--;
@@ -97,8 +101,10 @@ public class a2_435 {
         float summedValues = 0;
         int count = 0;
         Map<Integer,Integer> imputationIndexMap = new HashMap();
-        imputedDatasetMap.put("V70480478_missing01_imputed_mean",copyArray(datasetMap.get("dataset_missing01")));
-        imputedDatasetMap.put("V70480478_missing10_imputed_mean", copyArray(datasetMap.get("dataset_missing10")));
+        imputedDatasetMap.put("V70480478_missing01_imputed_mean",
+                copyArray(datasetMap.get("dataset_missing01")));
+        imputedDatasetMap.put("V70480478_missing10_imputed_mean", 
+                copyArray(datasetMap.get("dataset_missing10")));
         for(String datasetMapKey: datasetKeys){
             for(int i = 0;i < 13; i++){
                 for(int j = 0;j < 8795;j++){
@@ -110,8 +116,6 @@ public class a2_435 {
                         imputationIndexMap.put(j,i);
                     }
                 }
-//              calculate mean of all values and replace null values with that
-//              mean.
                 Float imputedValue = summedValues/count;
                 imputationIndexMap.keySet().forEach((imputationIndexMapKey) -> {
                     if(datasetMapKey.equals("dataset_missing01")){
@@ -180,15 +184,22 @@ public class a2_435 {
                 if(datasetMap.get(datasetKey)[i][j] == null){
                     if(datasetMap.get(datasetKey)[i][13] == (float)1){
                         if(datasetKey.equals("dataset_missing01")){
-                        imputedDatasetMap.get("V70480478_missing01_imputed_mean_conditional")[i][j] = classYMeanMap.get(j);
+                        imputedDatasetMap.get("V70480478_missing01_imputed" +
+                            "_mean_conditional")[i][j] = classYMeanMap.get(j);
                         } else {
-                            imputedDatasetMap.get("V70480478_missing10_imputed_mean_conditional")[i][j] = classYMeanMap.get(j);
+                            imputedDatasetMap.get("V70480478_missing10" +
+                                    "_imputed" + "_mean_conditional")[i][j] = 
+                                    classYMeanMap.get(j);
                         }
                     } else if (datasetMap.get(datasetKey)[i][13] == (float)0){
                         if(datasetKey.equals("dataset_missing01")){
-                            imputedDatasetMap.get("V70480478_missing01_imputed_mean_conditional")[i][j] = classNMeanMap.get(j);
+                            imputedDatasetMap.get("V70480478_missing01" +
+                                    "_imputed_mean_conditional")[i][j] = 
+                                    classNMeanMap.get(j);
                         } else {
-                            imputedDatasetMap.get("V70480478_missing10_imputed_mean_conditional")[i][j] = classNMeanMap.get(j);
+                            imputedDatasetMap.get("V70480478_missing10" +
+                                    "_imputed_mean_conditional")[i][j] =
+                                    classNMeanMap.get(j);
                         }
                     }
                 }   
@@ -213,18 +224,21 @@ public class a2_435 {
                     distanceMap.clear();
                     for(int j = 0;j < 8795;j++){
                         if(i != j){
-                        System.arraycopy(datasetMap.get(datasetKey)[j], 0, array2, 0, 13);
+                        System.arraycopy(datasetMap.get(datasetKey)[j], 0,
+                                array2, 0, 13);
                         Float currentDistance = (float)0;
                         for(int k = 0;k < 13; k++){
                             if(array1[k] == null || array2[k] == null){
                               currentDistance = currentDistance + 1;
                             } else {
-                              currentDistance = currentDistance + (float)(Math.pow((array1[k] - array2[k]),2));
+                              currentDistance = currentDistance + (float)
+                                      (Math.pow((array1[k] - array2[k]),2));
                             }
                           }
                           currentDistance = (float)Math.sqrt(currentDistance);
                           if(currentDistance < distance){
-                          System.arraycopy(datasetMap.get(datasetKey)[j], 0, currentClosestArray, 0, 13);
+                          System.arraycopy(datasetMap.get(datasetKey)[j], 0,
+                                  currentClosestArray, 0, 13);
                           distanceMap.put(currentDistance, currentClosestArray);
                           distance = currentDistance;
                           }
@@ -232,7 +246,8 @@ public class a2_435 {
                     }
                     boolean duplicateNulls = true;
                     Float globalKey = (float)0;
-                    Map<Float, Float[]>sortedDistanceMap = new TreeMap<>(distanceMap);
+                    Map<Float, Float[]>sortedDistanceMap = 
+                            new TreeMap<>(distanceMap);
                     for(Float key: sortedDistanceMap.keySet()){
                         for(int l = 0; l < 13; l++){
                             if(datasetMap.get(datasetKey)[i][l] == null){
@@ -246,18 +261,24 @@ public class a2_435 {
                             }
                         }
                         if(!duplicateNulls) {
-                            break; //exit, we have found the least match with no matching nulls
+                            break; 
                         }
                     }
                     if(!duplicateNulls){
                         for(int m = 0;m < 13;m++){
                             if(datasetKey.equals("dataset_missing01")){
-                                if(imputedDatasetMap.get("V70480478_missing01_imputed_hd")[i][m] == null){
-                                    imputedDatasetMap.get("V70480478_missing01_imputed_hd")[i][m] = sortedDistanceMap.get(globalKey)[m];
+                                if(imputedDatasetMap.get("V70480478_missing01" +
+                                        "_imputed_hd")[i][m] == null){
+                                    imputedDatasetMap.get("V70480478_missing01" +
+                                            "_imputed_hd")[i][m] = 
+                                            sortedDistanceMap.get(globalKey)[m];
                                 }
                             } else if(datasetKey.equals("dataset_missing10")) {
-                                if(imputedDatasetMap.get("V70480478_missing10_imputed_hd")[i][m] == null){
-                                    imputedDatasetMap.get("V70480478_missing10_imputed_hd")[i][m] = sortedDistanceMap.get(globalKey)[m];
+                                if(imputedDatasetMap.get("V70480478_missing10" +
+                                        "_imputed_hd")[i][m] == null){
+                                    imputedDatasetMap.get("V70480478" +
+                                            "_missing10_imputed_hd")[i][m] = 
+                                            sortedDistanceMap.get(globalKey)[m];
                                 } 
                             }
                         }
@@ -265,6 +286,88 @@ public class a2_435 {
                 }
             }
         });
+    }
+    protected static void conditionalHotDeckImputation() {
+        imputedDatasetMap.put("V70480478_missing01_imputed_hd_conditional", 
+                copyArray(datasetMap.get("dataset_missing01")));
+        imputedDatasetMap.put("V70480478_missing10_imputed_hd_conditional", 
+                copyArray(datasetMap.get("dataset_missing10")));
+        
+                Map<Float, Float[]> distanceMap = new HashMap<>();
+        datasetKeys.forEach((datasetKey) -> {
+            for(int i = 0;i < 8795;i++){
+                Float[] array1 = new Float[14];
+                Float[] array2 = new Float[14];
+                System.arraycopy(datasetMap.get(datasetKey)[i], 0, array1, 0, 14);
+                Float classFeature = array1[13];
+                Float distance = (float)100;
+                Float[] currentClosestArray = new Float[14];
+                if(Arrays.asList(array1).contains(null)){
+                    distanceMap.clear();
+                    for(int j = 0;j < 8795;j++){
+                        if(i != j && (datasetMap.get(datasetKey)[j][13] == classFeature)){
+                        System.arraycopy(datasetMap.get(datasetKey)[j], 0,
+                                array2, 0, 14);
+                        Float currentDistance = (float)0;
+                        for(int k = 0;k < 13; k++){
+                            if(array1[k] == null || array2[k] == null){
+                              currentDistance = currentDistance + 1;
+                            } else {
+                              currentDistance = currentDistance + (float)
+                                      (Math.pow((array1[k] - array2[k]),2));
+                            }
+                          }
+                          currentDistance = (float)Math.sqrt(currentDistance);
+                          if(currentDistance < distance){
+                          System.arraycopy(datasetMap.get(datasetKey)[j], 0,
+                                  currentClosestArray, 0, 13);
+                          distanceMap.put(currentDistance, currentClosestArray);
+                          distance = currentDistance;
+                          }
+                        } 
+                    }
+                    boolean duplicateNulls = true;
+                    Float globalKey = (float)0;
+                    Map<Float, Float[]>sortedDistanceMap = 
+                            new TreeMap<>(distanceMap);
+                    for(Float key: sortedDistanceMap.keySet()){
+                        for(int l = 0; l < 13; l++){
+                            if(datasetMap.get(datasetKey)[i][l] == null){
+                                if(distanceMap.get(key)[l] != null){
+                                    duplicateNulls = false;
+                                    globalKey = key;
+                                } else{
+                                    duplicateNulls = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!duplicateNulls) {
+                            break; 
+                        }
+                    }
+                    if(!duplicateNulls){
+                        for(int m = 0;m < 13;m++){
+                            if(datasetKey.equals("dataset_missing01")){
+                                if(imputedDatasetMap.get("V70480478_missing01" +
+                                        "_imputed_hd")[i][m] == null){
+                                    imputedDatasetMap.get("V70480478_missing01" +
+                                            "_imputed_hd")[i][m] = 
+                                            sortedDistanceMap.get(globalKey)[m];
+                                }
+                            } else if(datasetKey.equals("dataset_missing10")) {
+                                if(imputedDatasetMap.get("V70480478_missing10" +
+                                        "_imputed_hd")[i][m] == null){
+                                    imputedDatasetMap.get("V70480478" +
+                                            "_missing10_imputed_hd")[i][m] = 
+                                            sortedDistanceMap.get(globalKey)[m];
+                                } 
+                            }
+                        }
+                    }
+                }
+            }
+        });System.out.println("break");
     } 
 }
 

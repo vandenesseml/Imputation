@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,7 @@ public class a2_435 {
         conditionalMeanImputation();
         hotDeckImputation();
         conditionalHotDeckImputation();
+        calculateAndDisplayMAE();
     }
     protected static void init() {
         fileMap = new HashMap();
@@ -40,11 +42,7 @@ public class a2_435 {
         fileMap.put("dataset_missing10.csv", new String[8796][14]);
         datasetMap = new HashMap();
         imputedDatasetMap = new HashMap();
-        
-        imputedDatasetMap.put("V70480478_missing10_imputed_hd",
-                new Float[8796][14]);
-        imputedDatasetMap.put("V70480478_missing10_imputed_hd_conditional",
-                new Float[8796][14]);
+        datasetKeys = new HashSet();
     }
     protected static void buildDatasets(){
         try{
@@ -65,7 +63,9 @@ public class a2_435 {
                }
             } 
         }
-        datasetKeys = datasetMap.keySet();
+        datasetMap.keySet().forEach((key) -> {
+            datasetKeys.add(key);
+            });
         datasetKeys.remove("dataset_complete");
         }catch(IOException e) {
         }
@@ -219,7 +219,6 @@ public class a2_435 {
                 Float[] array2 = new Float[13];
                 System.arraycopy(datasetMap.get(datasetKey)[i], 0, array1, 0, 13);
                 Float distance = (float)100;
-                Float[] currentClosestArray = new Float[13];
                 if(Arrays.asList(array1).contains(null)){
                     distanceMap.clear();
                     for(int j = 0;j < 8795;j++){
@@ -235,13 +234,9 @@ public class a2_435 {
                                       (Math.pow((array1[k] - array2[k]),2));
                             }
                           }
-                          currentDistance = (float)Math.sqrt(currentDistance);
-                          if(currentDistance < distance){
-                          System.arraycopy(datasetMap.get(datasetKey)[j], 0,
-                                  currentClosestArray, 0, 13);
-                          distanceMap.put(currentDistance, currentClosestArray);
-                          distance = currentDistance;
-                          }
+                        currentDistance = (float)Math.sqrt(currentDistance);
+                        distanceMap.put(currentDistance, datasetMap.get(datasetKey)[j]);
+                        distance = currentDistance;
                         } 
                     }
                     boolean duplicateNulls = true;
@@ -249,9 +244,10 @@ public class a2_435 {
                     Map<Float, Float[]>sortedDistanceMap = 
                             new TreeMap<>(distanceMap);
                     for(Float key: sortedDistanceMap.keySet()){
+                        duplicateNulls = true;
                         for(int l = 0; l < 13; l++){
                             if(datasetMap.get(datasetKey)[i][l] == null){
-                                if(distanceMap.get(key)[l] != null){
+                                if(sortedDistanceMap.get(key)[l] != null){
                                     duplicateNulls = false;
                                     globalKey = key;
                                 } else{
@@ -282,6 +278,8 @@ public class a2_435 {
                                 } 
                             }
                         }
+                    } else {
+                        int x = 9;
                     }
                 }
             }
@@ -301,29 +299,26 @@ public class a2_435 {
                 System.arraycopy(datasetMap.get(datasetKey)[i], 0, array1, 0, 14);
                 Float classFeature = array1[13];
                 Float distance = (float)100;
-                Float[] currentClosestArray = new Float[14];
                 if(Arrays.asList(array1).contains(null)){
                     distanceMap.clear();
                     for(int j = 0;j < 8795;j++){
-                        if(i != j && (datasetMap.get(datasetKey)[j][13] == classFeature)){
-                        System.arraycopy(datasetMap.get(datasetKey)[j], 0,
-                                array2, 0, 14);
-                        Float currentDistance = (float)0;
-                        for(int k = 0;k < 13; k++){
-                            if(array1[k] == null || array2[k] == null){
-                              currentDistance = currentDistance + 1;
-                            } else {
-                              currentDistance = currentDistance + (float)
-                                      (Math.pow((array1[k] - array2[k]),2));
+                        if((i != j) && ((datasetMap.get(datasetKey)[j][13])
+                                .intValue() == classFeature.intValue())){
+                            System.arraycopy(datasetMap.get(datasetKey)[j], 0,
+                                    array2, 0, 14);
+                            Float currentDistance = (float)0;
+                            for(int k = 0;k < 13; k++){
+                                if(array1[k] == null || array2[k] == null){
+                                  currentDistance = currentDistance + 1;
+                                } else {
+                                  currentDistance = currentDistance + (float)
+                                          (Math.pow((array1[k] - array2[k]),2));
+                                }
                             }
-                          }
-                          currentDistance = (float)Math.sqrt(currentDistance);
-                          if(currentDistance < distance){
-                          System.arraycopy(datasetMap.get(datasetKey)[j], 0,
-                                  currentClosestArray, 0, 13);
-                          distanceMap.put(currentDistance, currentClosestArray);
-                          distance = currentDistance;
-                          }
+                            currentDistance = (float)Math.sqrt(currentDistance);
+                            distanceMap.put(currentDistance, datasetMap
+                                    .get(datasetKey)[j]);
+                            distance = currentDistance;
                         } 
                     }
                     boolean duplicateNulls = true;
@@ -333,7 +328,7 @@ public class a2_435 {
                     for(Float key: sortedDistanceMap.keySet()){
                         for(int l = 0; l < 13; l++){
                             if(datasetMap.get(datasetKey)[i][l] == null){
-                                if(distanceMap.get(key)[l] != null){
+                                if(sortedDistanceMap.get(key)[l] != null){
                                     duplicateNulls = false;
                                     globalKey = key;
                                 } else{
@@ -350,16 +345,16 @@ public class a2_435 {
                         for(int m = 0;m < 13;m++){
                             if(datasetKey.equals("dataset_missing01")){
                                 if(imputedDatasetMap.get("V70480478_missing01" +
-                                        "_imputed_hd")[i][m] == null){
+                                        "_imputed_hd_conditional")[i][m] == null){
                                     imputedDatasetMap.get("V70480478_missing01" +
-                                            "_imputed_hd")[i][m] = 
+                                            "_imputed_hd_conditional")[i][m] = 
                                             sortedDistanceMap.get(globalKey)[m];
                                 }
                             } else if(datasetKey.equals("dataset_missing10")) {
                                 if(imputedDatasetMap.get("V70480478_missing10" +
-                                        "_imputed_hd")[i][m] == null){
+                                        "_imputed_hd_conditional")[i][m] == null){
                                     imputedDatasetMap.get("V70480478" +
-                                            "_missing10_imputed_hd")[i][m] = 
+                                            "_missing10_imputed_hd_conditional")[i][m] = 
                                             sortedDistanceMap.get(globalKey)[m];
                                 } 
                             }
@@ -367,7 +362,35 @@ public class a2_435 {
                     }
                 }
             }
-        });System.out.println("break");
-    } 
+        });
+    }
+    protected static void calculateAndDisplayMAE(){
+        imputedDatasetMap.keySet().forEach((imputedDatasetMapKey -> {
+            String datasetMapKey = "dataset_" + imputedDatasetMapKey.substring(10, 19);
+            Float absSummedDifferences = (float)0;
+            int numberOfNulls = 0;
+            for(int i = 0; i < 8795;i++){
+                for(int j = 0;j < 14;j++){
+                    if(datasetMap.get(datasetMapKey)[i][j] == null){
+                        try{
+                            
+                        absSummedDifferences = absSummedDifferences + Math.abs((imputedDatasetMap.get(imputedDatasetMapKey)[i][j]) - (datasetMap.get("dataset_complete")[i][j]));
+                        numberOfNulls++;
+                        } catch (Exception e){
+                            int x = 0;
+                        }
+                    }
+                }
+            }
+            float MAE = (((float)1/(float)numberOfNulls)*absSummedDifferences);
+            String imputedDatasetName = imputedDatasetMapKey;
+            String algorithm = imputedDatasetName.substring(27,imputedDatasetName.length());
+            String datasetNumber = imputedDatasetMapKey.substring(17,19);
+            System.out.println("MAE_" + datasetNumber + algorithm + " = " + String.format("%.4f",MAE));
+        }));
+    }
+    protected static void formatAndSaveImputedDatasets(){
+        
+    }
 }
 

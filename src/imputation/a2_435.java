@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -200,41 +201,39 @@ public class a2_435 {
                 copyArray(datasetMap.get("dataset_missing01")));
         imputedDatasetMap.put("V70480478_missing10_imputed_hd", 
                 copyArray(datasetMap.get("dataset_missing10")));
-        Map<Float, Float[]> distanceMap = new HashMap<Float, Float[]>();
+        Map<Float, Float[]> distanceMap = new HashMap<>();
         datasetKeys.forEach((datasetKey) -> {
-            
             for(int i = 0;i < 8795;i++){
                 Float[] array1 = new Float[13];
                 Float[] array2 = new Float[13];
                 System.arraycopy(datasetMap.get(datasetKey)[i], 0, array1, 0, 13);
-                Float distance = (float)9.9;
+                Float distance = (float)100;
                 Float[] currentClosestArray = new Float[13];
                 if(Arrays.asList(array1).contains(null)){
                     distanceMap.clear();
                     for(int j = 0;j < 8795;j++){
+                        if(i != j){
                         System.arraycopy(datasetMap.get(datasetKey)[j], 0, array2, 0, 13);
                         Float currentDistance = (float)0;
-                        if(i != j){
-                          for(int k = 0;k < 13; k++){
-                              if(array1[k] == null){
-                                  array1[k] = (float)1;
-                              } else if (array2[k] == null){
-                                  array2[k] = (float)1;
-                              }
-                              currentDistance = currentDistance + (float)Math.sqrt(Math.pow((array1[k] - array2[k]),2));
+                        for(int k = 0;k < 13; k++){
+                            if(array1[k] == null || array2[k] == null){
+                              currentDistance = currentDistance + 1;
+                            } else {
+                              currentDistance = currentDistance + (float)(Math.pow((array1[k] - array2[k]),2));
+                            }
                           }
-                          
-                              distance = currentDistance;
-                              System.arraycopy(datasetMap.get(datasetKey)[j], 0, currentClosestArray, 0, 13);
-                          
-                            distanceMap.put(distance, currentClosestArray);
-                         
+                          currentDistance = (float)Math.sqrt(currentDistance);
+                          if(currentDistance < distance){
+                          System.arraycopy(datasetMap.get(datasetKey)[j], 0, currentClosestArray, 0, 13);
+                          distanceMap.put(currentDistance, currentClosestArray);
+                          distance = currentDistance;
+                          }
                         } 
                     }
-                    SortedSet<Float> keys = new TreeSet<>(distanceMap.keySet());
                     boolean duplicateNulls = true;
                     Float globalKey = (float)0;
-                    for (Float key : keys) { 
+                    Map<Float, Float[]>sortedDistanceMap = new TreeMap<>(distanceMap);
+                    for(Float key: sortedDistanceMap.keySet()){
                         for(int l = 0; l < 13; l++){
                             if(datasetMap.get(datasetKey)[i][l] == null){
                                 if(distanceMap.get(key)[l] != null){
@@ -242,28 +241,28 @@ public class a2_435 {
                                     globalKey = key;
                                 } else{
                                     duplicateNulls = true;
-                                }
-                            } 
-                        }
-                        if(!duplicateNulls) {
-                            break;
-                        }
-                    }
-                        if(!duplicateNulls){
-                            for(int m = 0;m < 13;m++){
-                                if(datasetKey.equals("dataset_missing01")){
-                                    if(imputedDatasetMap.get("V70480478_missing01_imputed_hd")[i][m] == null){
-                                        imputedDatasetMap.get("V70480478_missing01_imputed_hd")[i][m] = distanceMap.get(globalKey)[m];
-                                    }
-                                } else if(datasetKey.equals("dataset_missing10")) {
-                                    if(imputedDatasetMap.get("V70480478_missing10_imputed_hd")[i][m] == null){
-                                        imputedDatasetMap.get("V70480478_missing10_imputed_hd")[i][m] = distanceMap.get(globalKey)[m];
-                                    } 
+                                    break;
                                 }
                             }
                         }
-                    
-                }System.out.println();
+                        if(!duplicateNulls) {
+                            break; //exit, we have found the least match with no matching nulls
+                        }
+                    }
+                    if(!duplicateNulls){
+                        for(int m = 0;m < 13;m++){
+                            if(datasetKey.equals("dataset_missing01")){
+                                if(imputedDatasetMap.get("V70480478_missing01_imputed_hd")[i][m] == null){
+                                    imputedDatasetMap.get("V70480478_missing01_imputed_hd")[i][m] = sortedDistanceMap.get(globalKey)[m];
+                                }
+                            } else if(datasetKey.equals("dataset_missing10")) {
+                                if(imputedDatasetMap.get("V70480478_missing10_imputed_hd")[i][m] == null){
+                                    imputedDatasetMap.get("V70480478_missing10_imputed_hd")[i][m] = sortedDistanceMap.get(globalKey)[m];
+                                } 
+                            }
+                        }
+                    }
+                }
             }
         });
     } 

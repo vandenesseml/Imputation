@@ -1,15 +1,10 @@
 
 package imputation;
 
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -411,26 +406,28 @@ public class a2_435 {
                     if(i != 13){
                         fileOutput = fileOutput + "F" + (i+1) + ",";
                     } else {
-                        fileOutput = fileOutput + "Class\n";
+                        fileOutput = fileOutput + "Class";
                     }
                 }
+                printWriter.println(fileOutput);
                 for(int i = 0;i < 8795;i++){
+                    fileOutput = "";
                     for(int j = 0;j < 14;j++){
                         if(j == 13) {
                             if((imputedDatasetMap.get(imputedDatasetMapKey)[i][j])
                                     .intValue() == 1){
-                                fileOutput = fileOutput + "Y\n";
+                                fileOutput = fileOutput + "Y";
                         } else if ((imputedDatasetMap.get(imputedDatasetMapKey)[i][j])
                                 .intValue() == 0) {
-                                fileOutput = fileOutput + "N\n";
+                                fileOutput = fileOutput + "N";
                             }
                         } else {
                         fileOutput = fileOutput + String.format("%.5f",
                                 imputedDatasetMap.get(imputedDatasetMapKey)[i][j]) + ",";
                         }
                     }
+                    printWriter.println(fileOutput);
                 }
-                printWriter.write(fileOutput);
                 printWriter.close();
             } catch (FileNotFoundException ex) {
                     Logger.getLogger(a2_435.class.getName()).log(Level.SEVERE,

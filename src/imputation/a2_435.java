@@ -8,11 +8,13 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -52,12 +54,11 @@ public class a2_435 {
         for(String key: fileMap.keySet()) {
             String datasetKey = key.substring(0,key.length()-4);
             datasetMap.put(datasetKey, new Float[8796][14]);
-            FileReader filereader = new FileReader(key);
-            CSVReader csvReader = new CSVReader(filereader);
+            FileReader fileReader = new FileReader(key);
             int datasetIndex = 0;
-            int index;
-            while ((fileMap.get(key)[datasetIndex] = csvReader.readNext()) !=
-                    null) { 
+            Scanner datasetScanner = new Scanner(fileReader);
+            while(datasetScanner.hasNextLine()){
+                fileMap.get(key)[datasetIndex] = datasetScanner.nextLine().split(",");
                 datasetMap.get(datasetKey)[datasetIndex] = 
                         formatDatasetToFloat(fileMap.get(key)[datasetIndex]);
                 datasetIndex++;
@@ -402,42 +403,40 @@ public class a2_435 {
         imputedDatasetMap.keySet().forEach((imputedDatasetMapKey) -> {
             String fileName = imputedDatasetMapKey + ".csv";
             String[][] printArray = new String[8796][14];
-            FileOutputStream fileOutputStream = null;
-            OutputStreamWriter outputStreamWriter = null;
-            CSVWriter csvWriter = null;
+            PrintWriter printWriter = null;
+            String fileOutput = "";
             try {
-                    fileOutputStream = new FileOutputStream(fileName);
-                    outputStreamWriter = new OutputStreamWriter(fileOutputStream, 
-                    StandardCharsets.UTF_8);
-                    csvWriter = new CSVWriter(outputStreamWriter);
-                } catch (FileNotFoundException ex) {
+                printWriter = new PrintWriter(fileName);
+                for(int i = 0;i < 14;i++){
+                    if(i != 13){
+                        fileOutput = fileOutput + "F" + (i+1) + ",";
+                    } else {
+                        fileOutput = fileOutput + "Class\n";
+                    }
+                }
+                for(int i = 0;i < 8795;i++){
+                    for(int j = 0;j < 14;j++){
+                        if(j == 13) {
+                            if((imputedDatasetMap.get(imputedDatasetMapKey)[i][j])
+                                    .intValue() == 1){
+                                fileOutput = fileOutput + "Y\n";
+                        } else if ((imputedDatasetMap.get(imputedDatasetMapKey)[i][j])
+                                .intValue() == 0) {
+                                fileOutput = fileOutput + "N\n";
+                            }
+                        } else {
+                        fileOutput = fileOutput + String.format("%.5f",
+                                imputedDatasetMap.get(imputedDatasetMapKey)[i][j]) + ",";
+                        }
+                    }
+                }
+                printWriter.write(fileOutput);
+                printWriter.close();
+            } catch (FileNotFoundException ex) {
                     Logger.getLogger(a2_435.class.getName()).log(Level.SEVERE,
                             null, ex);
                 }
-            for(int i = 0;i < 14;i++){
-                if(i != 13){
-                    printArray[0][i] = "F" + (i+1);
-                } else {
-                    printArray[0][i] = "Class";
-                }
-            }
-            for(int i = 0;i < 8795;i++){
-                for(int j = 0;j < 14;j++){
-                    if(j == 13) {
-                        if((imputedDatasetMap.get(imputedDatasetMapKey)[i][j]).intValue() == 1){
-                            printArray[i+1][j] = "Y";
-                    } else {
-                            printArray[i+1][j] = "N";
-                        }
-                    } else {
-                    printArray[i+1][j] = String.format("%.5f",
-                            imputedDatasetMap.get(imputedDatasetMapKey)[i][j]);
-                    }
-                }
-                csvWriter.writeNext(printArray[i]);
-            }
         });
-        
     }
 }
 
